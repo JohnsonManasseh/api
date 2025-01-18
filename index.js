@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 
 const upload = multer();
 app.use(upload.none());
-// app.use(express.json());
+app.use(express.json());
 app.use("/", bookingRoutes);
 
 const uri = process.env.MONGO_URI;
