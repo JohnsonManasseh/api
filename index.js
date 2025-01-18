@@ -26,7 +26,7 @@ mongoose
   });
 
 app.get("/", (req, res) => {
-  res.send("Welcome to the API!");
+  res.send("Start browsing the apis");
 });
 
 app.listen(port, () => {
