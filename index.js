@@ -15,8 +15,7 @@ app.use(upload.none());
 // app.use(express.json());
 app.use("/", bookingRoutes);
 
-const uri =
-  "mongodb+srv://johnsonmanasseh:YiWCL5opmNnZww6D@veladunecluster.w2ru8.mongodb.net/?retryWrites=true&w=majority&appName=VeladuneCluster";
+const uri = process.env.MONGO_URI;
 mongoose
   .connect(uri)
   .then(() => {
