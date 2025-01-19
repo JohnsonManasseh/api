@@ -53,7 +53,7 @@ router.post("/register", async (req, res) => {
     if (existingUser) {
       return res
         .status(400)
-        .json({ message: "User already exitst please login" });
+        .json({ message: "User already exists please login" });
     }
 
     const newUser = new User({
@@ -104,6 +104,25 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Error creating booking:", err);
     res.status(500).json({ message: "Failed to login" });
+  }
+});
+
+router.get("/userdetails", async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    res.status(201).json({ user, message: "User details found" });
+  } catch (err) {
+    console.error("Error finding details", err);
+    res.status(500).json({ message: "Failed to find user" });
   }
 });
 
