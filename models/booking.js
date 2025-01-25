@@ -14,10 +14,19 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     status: {
       type: String,
       enum: ["pending", "confirmed", "cancelled"],
       default: "pending",
+    },
+    roomId: {
+      type: String,
+      required: true,
     },
   },
   {
