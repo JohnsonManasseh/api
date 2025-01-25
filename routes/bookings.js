@@ -164,4 +164,39 @@ router.get("/updateuserdetails", async (req, res) => {
   }
 });
 
+router.put("/updateuserdetails", async (req, res) => {
+  try {
+    const { id, userName, email, phone } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "User id is required" });
+    }
+
+    const updateFields = {};
+    if (userName) updateFields.userName = userName;
+    if (email) updateFields.email = email;
+    if (phone) updateFields.phone = phone;
+
+    if (Object.keys(updateFields === 0)) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(400).json({ message: "user not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "UserDetails updated successfully", user: updatedUser });
+  } catch {
+    console.error("Error updating user details:", error);
+    res.status(500).json({ message: "Failed to update user details" });
+  }
+});
+
 module.exports = router;
