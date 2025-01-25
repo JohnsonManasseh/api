@@ -15,6 +15,18 @@ const roomSchema = new mongoose.Schema(
       type: String,
       default: true,
     },
+    bookings: [
+      {
+        checkInDate: {
+          type: Date,
+          required: true,
+        },
+        checkOutDate: {
+          type: Date,
+          required: true,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

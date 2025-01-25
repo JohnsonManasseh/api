@@ -28,14 +28,13 @@ router.post("/addbooking", async (req, res) => {
     }
     const room = await Room.findById(roomId);
     if (!room) {
-      return res.status(400).json({ message: "Room not available" });
+      return res.status(400).json({ message: "Room not found" });
     }
     if (!room.availability) {
       return res.status(400).json({ message: "Room is not available" });
     }
 
     const newBooking = new Booking({
-      // bookingId: _id,
       customerName,
       checkInDate,
       checkOutDate,
@@ -44,6 +43,7 @@ router.post("/addbooking", async (req, res) => {
       roomId,
     });
     room.availability = false;
+    room.bookings.push({ checkInDate, checkOutDate });
     await room.save();
 
     await newBooking.save();
@@ -56,36 +56,62 @@ router.post("/addbooking", async (req, res) => {
 
 router.put("/updatebooking", async (req, res) => {
   try {
-    const { id, checkInDate, checkOutDate, action } = req.body;
+    console.log(req.body);
+    const { bookingId, checkInDate, checkOutDate, action, roomId } = req.body;
 
-    if (!id) {
+    if (!bookingId) {
       return res.status(400).json({ message: "Booking id is required" });
     }
-    if ((checkInDate && !checkOutDate) || (!checkInDate && checkOutDate)) {
+    if (!roomId) {
+      return res.status(400).json({ message: "Room id is required" });
+    }
+    if (!checkInDate && !checkOutDate && !action) {
+      return res
+        .status(400)
+        .json({ message: "either check in - out date or action is required" });
+    }
+    if (
+      (checkInDate && !checkOutDate && roomId) ||
+      (!checkInDate && checkOutDate && roomId)
+    ) {
       return res.status(400).json({
         message:
           "Both 'checkInDate' and 'checkOutDate' must be provided to update booking dates.",
       });
     }
 
-    if ((action && checkInDate) || (action && checkOutDate)) {
+    if (
+      (action && checkInDate && roomId) ||
+      (action && checkOutDate && roomId)
+    ) {
       return res.status(400).json({
         message:
           "'action' cannot be provided with 'checkInDate' and 'checkOutDate'.",
       });
     }
 
+    const room = await Room.findById(roomId);
+    const booking = await Booking.findById(bookingId);
     if (action === "cancel") {
-      const cancelledBooking = await Booking.findByIdAndUpdate(
-        id,
-        { status: "cancelled" },
-        { new: true }
+      booking.status = "cancelled";
+      room.availability = true;
+      room.bookings = room.bookings.filter(
+        (b) => b._id.toString() !== booking._id.toString()
       );
-      if (!cancelledBooking) {
-        return res.status(400).json({ message: "Booking not found" });
-      }
+
+      // const cancelledBooking = await Booking.findByIdAndUpdate(
+      //   id,
+      //   { status: "cancelled" },
+      //   { new: true }
+      // );
+      // if (!cancelledBooking) {
+      //   return res.status(400).json({ message: "Booking not found" });
+      // }
+      await room.save();
+      await booking.save();
       return res.status(200).json({
-        cancelledBooking,
+        booking,
+        room,
         message: "Booking cancelled successfully",
       });
     }
@@ -109,7 +135,7 @@ router.put("/updatebooking", async (req, res) => {
 
     res.status(200).json({
       message: "Bookings updated successfully",
-      booking: updatedBooking,
+      // booking: updatedBooking,
     });
   } catch (error) {
     console.error("Error updating booking", error);

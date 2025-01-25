@@ -6,6 +6,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    bookingId: {
+      type: String,
+      // required: true,
+    },
     checkInDate: {
       type: Date,
       required: true,
@@ -17,7 +21,7 @@ const bookingSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
     },
     status: {
       type: String,
@@ -26,7 +30,7 @@ const bookingSchema = new mongoose.Schema(
     },
     roomId: {
       type: String,
-      required: true,
+      // required: true,
     },
   },
   {
