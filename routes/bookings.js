@@ -3,7 +3,7 @@ const Booking = require("../models/booking");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const Room = require("../models/rooms");
-const JWT_SECRET = "johsdfsdfasfag442w4vnson";
+const JWT_SECRET = process.env.JWT_SECRET;
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 
