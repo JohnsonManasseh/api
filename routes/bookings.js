@@ -30,8 +30,30 @@ router.post("/addbooking", async (req, res) => {
     if (!room) {
       return res.status(400).json({ message: "Room not found" });
     }
-    if (!room.availability) {
-      return res.status(400).json({ message: "Room is not available" });
+
+    const checkRoomAvailable = room.bookings.some((b) => {
+      const existingCheckInDate = new Date(b.checkInDate);
+      const existingCheckOutDate = new Date(b.checkOutDate);
+      const newCheckInDate = new Date(checkInDate);
+      const newCheckOutDate = new Date(checkOutDate);
+
+      return (
+        (newCheckInDate >= existingCheckInDate &&
+          newCheckInDate < existingCheckOutDate) ||
+        (newCheckOutDate > existingCheckInDate &&
+          newCheckOutDate <= existingCheckOutDate) ||
+        (newCheckInDate <= existingCheckInDate &&
+          newCheckOutDate >= existingCheckOutDate)
+      );
+    });
+
+    // const checkRoomAvailable = room.bookings.filter(
+    //   (b) => b.checkInDate === checkInDate || b.checkOutDate === checkOutDate
+    // );
+    if (checkRoomAvailable) {
+      return res
+        .status(400)
+        .json({ message: "Room is not available for the selected date" });
     }
 
     const newBooking = new Booking({
@@ -120,6 +142,28 @@ router.put("/updatebooking", async (req, res) => {
       });
     }
 
+    const checkRoomAvailable = room.bookings.some((b) => {
+      const existingCheckInDate = new Date(b.checkInDate);
+      const existingCheckOutDate = new Date(b.checkOutDate);
+      const newCheckInDate = new Date(checkInDate);
+      const newCheckOutDate = new Date(checkOutDate);
+
+      return (
+        (newCheckInDate >= existingCheckInDate &&
+          newCheckInDate < existingCheckOutDate) ||
+        (newCheckOutDate > existingCheckInDate &&
+          newCheckOutDate <= existingCheckOutDate) ||
+        (newCheckInDate <= existingCheckInDate &&
+          newCheckOutDate >= existingCheckOutDate)
+      );
+    });
+    if (checkRoomAvailable) {
+      return res
+        .status(400)
+        .json({ message: "Room is not available for the selected date" });
+    }
+    room.bookings.push({ checkInDate, checkOutDate });
+    await room.save();
     const updateFields = {};
     if (checkInDate) updateFields.checkInDate = checkInDate;
     if (checkOutDate) updateFields.checkOutDate = checkOutDate;
@@ -195,7 +239,7 @@ router.get("/rooms", async (req, res) => {
   }
 });
 
-router.get("/updateroom", async (req, res) => {
+router.put("/updateroom", async (req, res) => {
   try {
     const { roomId, name, availability, price, bookings } = req.body;
 
