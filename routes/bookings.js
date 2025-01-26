@@ -5,6 +5,7 @@ const User = require("../models/user");
 const Room = require("../models/rooms");
 const JWT_SECRET = "johsdfsdfasfag442w4vnson";
 const router = express.Router();
+const bcrypt = require("bcryptjs");
 
 router.post("/addbooking", async (req, res) => {
   try {
@@ -78,7 +79,6 @@ router.post("/addbooking", async (req, res) => {
 
 router.put("/updatebooking", async (req, res) => {
   try {
-    console.log(req.body);
     const { bookingId, checkInDate, checkOutDate, action, roomId } = req.body;
 
     if (!bookingId) {
@@ -115,7 +115,6 @@ router.put("/updatebooking", async (req, res) => {
     const room = await Room.findById(roomId);
     const booking = await Booking.findById(bookingId);
     if (action === "cancel") {
-      // booking.status = "cancelled";
       room.availability = true;
 
       room.bookings = room.bookings.filter(
@@ -134,7 +133,6 @@ router.put("/updatebooking", async (req, res) => {
         return res.status(400).json({ message: "Booking not found" });
       }
 
-      // await booking.save();
       return res.status(200).json({
         cancelledBooking,
         room,
@@ -275,10 +273,13 @@ router.post("/register", async (req, res) => {
         .json({ message: "User already exists please login" });
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const newUser = new User({
       userName,
       email,
-      password,
+      password: hashedPassword,
     });
 
     await newUser.save();
@@ -314,6 +315,12 @@ router.post("/login", async (req, res) => {
         .status(400)
         .json({ message: "Account not found, please signup" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
     const token = jwt.sign(
       { userId: user._id, user: user.userName },
       JWT_SECRET,
