@@ -93,24 +93,28 @@ router.put("/updatebooking", async (req, res) => {
     const room = await Room.findById(roomId);
     const booking = await Booking.findById(bookingId);
     if (action === "cancel") {
-      booking.status = "cancelled";
+      // booking.status = "cancelled";
       room.availability = true;
-      room.bookings = room.bookings.filter(
-        (b) => b._id.toString() !== booking._id.toString()
-      );
 
-      // const cancelledBooking = await Booking.findByIdAndUpdate(
-      //   id,
-      //   { status: "cancelled" },
-      //   { new: true }
-      // );
-      // if (!cancelledBooking) {
-      //   return res.status(400).json({ message: "Booking not found" });
-      // }
+      room.bookings = room.bookings.filter(
+        (b) =>
+          b.checkInDate.toISOString() !== booking.checkInDate.toISOString() &&
+          b.checkOutDate.toISOString() !== booking.checkOutDate.toISOString()
+      );
       await room.save();
-      await booking.save();
+
+      const cancelledBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        { status: "cancelled" },
+        { new: true }
+      );
+      if (!cancelledBooking) {
+        return res.status(400).json({ message: "Booking not found" });
+      }
+
+      // await booking.save();
       return res.status(200).json({
-        booking,
+        cancelledBooking,
         room,
         message: "Booking cancelled successfully",
       });
@@ -124,10 +128,14 @@ router.put("/updatebooking", async (req, res) => {
       return res.status(400).json({ message: "No fields to update" });
     }
 
-    const updatedBooking = await Booking.findByIdAndUpdate(id, updateFields, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      updateFields,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedBooking) {
       return res.status(400).json({ message: "No bookings found" });
@@ -174,6 +182,37 @@ router.post("/addroom", async (req, res) => {
   } catch (err) {
     console.error("Error adding room:", err);
     res.status(500).json({ message: "Failed to add room" });
+  }
+});
+
+router.get("/rooms", async (req, res) => {
+  try {
+    const rooms = await Room.find();
+    res.status(200).json({ message: "Rooms fetched successfully", rooms });
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({ message: "Failed to fetch rooms" });
+  }
+});
+
+router.get("/updateroom", async (req, res) => {
+  try {
+    const { roomId, name, availability, price, bookings } = req.body;
+
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (availability) updateFields.availability = availability;
+    if (price) updateFields.price = price;
+    if (bookings) updateFields.bookings = bookings;
+
+    const updateRoom = await Room.findByIdAndUpdate(roomId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({ updateRoom, message: "Rooms updated successfully" });
+  } catch (error) {
+    console.error("Error updating rooms:", error);
+    res.status(500).json({ message: "Failed to update rooms" });
   }
 });
 
@@ -259,25 +298,6 @@ router.get("/userdetails", async (req, res) => {
     }
     const bookings = await Booking.find({ userId: id });
     res.status(200).json({ user, bookings, message: "User details found" });
-  } catch (err) {
-    console.error("Error finding details", err);
-    res.status(500).json({ message: "Failed to find user" });
-  }
-});
-
-router.get("/updateuserdetails", async (req, res) => {
-  try {
-    const { id } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ message: "User not found" });
-    }
-
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
-    res.status(201).json({ user, message: "User details found" });
   } catch (err) {
     console.error("Error finding details", err);
     res.status(500).json({ message: "Failed to find user" });
